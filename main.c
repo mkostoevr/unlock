@@ -1,6 +1,9 @@
 // Copyright (C) 2008 The Android Open Source Project
 // Copyright (C) 2020 Magomed Kostoev
 
+// Compile using:
+// clang main.c error.c -luser32 -lntdll -Wno-everything
+
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -188,11 +191,13 @@ void DisplayVolumePaths(PWCHAR VolumeName) {
   if (Success) {
     //  Display the various paths.
     for (NameIdx = Names; NameIdx[0] != L'\0'; NameIdx += wcslen(NameIdx) + 1) {
+      WCHAR c = NameIdx[wcslen(NameIdx) - 1];
       NameIdx[wcslen(NameIdx) - 1] = 0;
       char *path_to_device_path = wcs2hex(NameIdx);
       char *path_to_device_device = wcs2hex(current_device);
       cdict_CStr_CStr_add_vv(&path_to_device, path_to_device_path,
                              path_to_device_device, CDICT_REPLACE_EXIST);
+      NameIdx[wcslen(NameIdx) - 1] = c;
     }
   }
 
@@ -251,9 +256,6 @@ void fill_path_to_device_dict(void) {
       break;
     }
 
-    wprintf(L"\nFound a device: %s", DeviceName);
-    wprintf(L"\nVolume name: %s", VolumeName);
-    wprintf(L"\nPaths:");
     current_device = DeviceName;
     DisplayVolumePaths(VolumeName);
 
@@ -331,7 +333,8 @@ int wmain(int argc, WCHAR *argv[]) {
   // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH.
   if (!NT_SUCCESS(status)) {
     printf("NtQuerySystemInformation failed!\n");
-    FatalError(FILE_LINE) return 1;
+    FatalError(FILE_LINE);
+    return 1;
   }
 
   for (i = 0; i < handleInfo->HandleCount; i++) {
@@ -359,8 +362,13 @@ int wmain(int argc, WCHAR *argv[]) {
     }
 
     // Query the object name (unless it has an access of
-    // 0x0012019f, on which NtQueryObject could hang.
-    if (handle.GrantedAccess == 0x0012019f) {
+    // 0x0012019f or 0x001A019F, on which NtQueryObject could hang.
+    if (handle.GrantedAccess == 0x0012019f ||
+        handle.GrantedAccess == 0x001A019F ||
+        handle.GrantedAccess == 0x00120189 ||
+        handle.GrantedAccess == 0x001f01ff ||
+        handle.GrantedAccess == 0x00120089 ||
+        handle.GrantedAccess == 0x001A0089) {
       free(objectTypeInfo);
       CloseHandle(dupHandle);
       continue;
@@ -386,7 +394,7 @@ int wmain(int argc, WCHAR *argv[]) {
         WCHAR *name = calloc(objectName.Length, sizeof(*objectName.Buffer));
         memcpy(name, objectName.Buffer, objectName.Length);
         char *name_hex = wcs2hex(name);
-        if (strstr(name_hex, full_path_hex)) {
+        if (!strncmp(name_hex, full_path_hex, strlen(full_path_hex))) {
           printf("[%#x] \"%.*S\": \"%.*S\" (PID: %u)\n", handle.Handle,
                  objectTypeInfo->Name.Length / 2, objectTypeInfo->Name.Buffer,
                  objectName.Length / 2, objectName.Buffer, handle.ProcessId);
