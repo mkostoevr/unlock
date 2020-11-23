@@ -1,0 +1,3 @@
+[submodule "cdict"]
+	path = cdict
+	url = https://github.com/mkostoevr/cdict
