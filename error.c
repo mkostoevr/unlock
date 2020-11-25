@@ -4,41 +4,19 @@
 
 #include <windows.h>
 
-#ifdef ONE_SOURCE
-#define FUNDEC static
-#define VARDEC static
-#define VARDEF static
-#else
-#define FUNDEC
-#define VARDEC extern
-#define VARDEF
-#endif
-
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 #define FILE_LINE "(" __FILE__ ": " STR(__LINE__) ")"
 
-FUNDEC VOID Error(LPCSTR szErrorLocation);
-FUNDEC VOID FatalError(LPCSTR szErrorLocation);
-FUNDEC VOID LowLevelError(LPCSTR szErrorLocation);
-FUNDEC VOID FatalLowLevelError(LPCSTR szErrorLocation);
+VOID Error(LPCSTR szErrorLocation);
+VOID FatalError(LPCSTR szErrorLocation);
+VOID LowLevelError(LPCSTR szErrorLocation);
+VOID FatalLowLevelError(LPCSTR szErrorLocation);
 
 #define LOCAL_ERR_noError "No error?"
 #define LOCAL_ERR_errorNumber "Error "
 #define LOCAL_ERR_atLocation " in "
 #define LOCAL_ERR_moreInfo ". More info:\n"
-#define LOCAL_BOT_gameNotFound "Game not found, trying again..."
-#define LOCAL_BOT_gameFirstBrownTabFoundAt "Game first gray tab found at "
-#define LOCAL_BOT_gameIsLost "Game is lost, trying to find it again..."
-#define LOCAL_BOT_botIsStopping "Stopping..."
-#define LOCAL_UI_initialStatus                                                 \
-  "Press button under the label and click on game window to start"
-#define LOCAL_UI_sleepTime "Time between catches (ms.)"
-#define LOCAL_UI_start "Activate bot"
-#define LOCAL_UI_stop "Stop bot"
-#define LOCAL_UI_latency "Bot latency"
-#define LOCAL_UI_updateWindowsList "Update windows list"
-#define LOCAL_UI_appName "CFLF"
 
 static LPSTR GetErrorString(DWORD dwErrorCode) {
   LPSTR szErrorString;
